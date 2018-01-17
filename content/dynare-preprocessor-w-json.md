@@ -5,7 +5,7 @@ Tags: Dynare, Preprocessor, JSON, Matlab
 Slug: dynare-preprocessor-w-json
 Authors: Houtan Bastani
 Summary: An example of how to use the JSON output from the Dynare Preprocessor
-Download: https://www.dynare.org
+Download: https://github.com/houtanb/obsmacro-dynare-json.git
 
 We have recently added JSON output to the Dynare Preprocessor. In this article, I'd like to briefly discuss the setup of the Dynare Preprocessor, the JSON output it produces, and show an example of how to use the JSON output to estiamte a model via OLS.
 
