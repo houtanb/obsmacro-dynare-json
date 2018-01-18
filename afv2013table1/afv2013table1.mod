@@ -22,4 +22,4 @@ model(linear);
     workedm = b0 + b1*morekids + b2*agem1 + b3*agefstm + b4*boy1st + b5*boy2nd + b6*blackm +b7*hispm + b8*othracem + resb;
 end;
 
-dyn_ols(dseries('Angrist_FernandezVal_2013.csv'));
+ds = dyn_ols(dseries('Angrist_FernandezVal_2013.csv'));
