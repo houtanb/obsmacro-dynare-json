@@ -2,3 +2,8 @@
 output/*
 *.pyc
 plugins/*
+afv2013table1/*.m
+afv2013table1/*.log
+afv2013table1/*.mat
+afv2013table1/*.json
+afv2013table1/afv2013table1/*
