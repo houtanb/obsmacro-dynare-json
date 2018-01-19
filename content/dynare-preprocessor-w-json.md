@@ -361,4 +361,4 @@ Having obtained our Y vector and X matrix, we are now ready to run our estimatio
 ```
 After this block, the estimated parameters will be in `oo_.ols.eq1.beta` and will have been asigned to `M_.params`, the Dynare parameter vector that is updated every time an estimation procedure is run.
 
-And that's it! The rest of the code simply takes care of displaying the estimated parameters in a table and calculating the various statistics and standard errors.
+And that's it! The rest of the code simply takes care of calculating the various statistics and standard errors and displaying the estimated parameters in a table.
