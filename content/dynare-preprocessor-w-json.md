@@ -346,7 +346,7 @@ Thus, when parsing is finished, we will have constructed the `Y` vector and the 
 
 #### Step 3: Estimation via OLS ####
 
-Having obtained our Y vector and X matrix, we are now ready to run our estimation. Though we know that $\hat{\beta} = (X'X)^{-1}X'Y$, matrix inversion is slow and numerically unstable for small values. Hence we use the `QR` decomposition; instead of performing the estimation by simply running the standard OLS Estimation calculation, $\hat{\beta} = R^{-1}Q'Y$ (lines 174-183).
+Having obtained our Y vector and X matrix, we are now ready to run our estimation. Though we know that $\hat{\beta} = (X'X)^{-1}X'Y$, matrix inversion is slow and numerically unstable for small values. Hence we use the QR decomposition; instead of performing the estimation by simply running the standard OLS Estimation calculation, $\hat{\beta} = R^{-1}Q'Y$ (lines 174-183).
 ```matlab
     [nobs, nvars] = size(X);
     oo_.ols.(tag).dof = nobs - nvars;
