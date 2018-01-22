@@ -41,7 +41,7 @@ PELICANOPTS += --relative-urls
 
 all: html
 
-html: content/dynare-preprocessor-w-json.md
+html: content/dynare-preprocessor-w-json.rst
 	$(PELICAN) -o $(OUTPUTDIR) -s $(CONFFILE) $(PELICANOPTS)
 
 clean:
