@@ -11,7 +11,7 @@ We have recently added an option to produce JSON output from the Dynare Preproce
 
 ## The Dynare Preprocessor ##
 
-At the basic level, the Dynare Preprocessor takes as input a Dynare `.mod` file and outputs the derivatives of the static and dynamic versions of the model in addition to a "driver" file that guides the backend actions to be taken. These outputs are provided for use with Matlab, Octave, C, and, as of the current unstable verion of Dynare, Julia.
+At the basic level, the Dynare Preprocessor takes as input a Dynare `.mod` file and outputs the derivatives of the static and dynamic versions of the model in addition to a "driver" file that guides the backend actions to be taken. These outputs are provided for use with Matlab, Octave, C, and, as of the current unstable version of Dynare, Julia.
 
 In addition to the aforementioned outputs, the unstable version of Dynare provides output in JSON format that represents the `.mod` file at every major preprocessing stage, Parsing, Check Pass, Transform Pass, and Computing Pass. To better understand the type of JSON output that can be obtained, it is helpful to see the Dynare Preprocessor Flow Chart and know in a general sense what is done at each stage:
 
@@ -19,9 +19,17 @@ In addition to the aforementioned outputs, the unstable version of Dynare provid
 <img src="{filename}/images/preprocessor-4.6.png" width="65%" />
 </div>
 
-As you can see from the Flow Chart above, there are 6 stages in the preprocessing: Macroprocessing of the model file, Parsing of the macro-expanded model file, Checking of the parsed model, Transformation of the checked model, the internal Computations that are done, and finally the writing of the output files mentioned above.
+As you can see from the Flow Chart above, there are 6 preprocessing stages:
 
-The macroprocessing stage uses the Dynare Macroprocessing language to perform textual manipulations of the `.mod` file. The output from this stage is a `.mod` file that is ready to be parsed. You can read more about the Dynare Macroprocessin language [here](). The Parsing stage of the preprocessor takes a potentially macro-expanded `.mod` file and parses it, creating an internal representation of the `.mod` file. In doing so, it checks that the `.mod` has valid Dynare Commands and options, that all variables have been declared, and other cursory checks. Once the internal representation of the `.mod` file has been created, the coherence of the `.mod` file is verified during the Check Pass. This is where we ensure that there are the same number of endogenous variables as equations in the model block, for example. After the many checks are performed, the preprocessor Transforms the model, adding auxiliary variables and equations for leaded and lagged variables, thereby transforming the model into time `t-1`, `t`, `t+1` form. Once the transformed model has been created, derivatives of the model are calculated using the symbolic derivative engine in the Computing Pass. Finally, the Matlab, Octave, C, or Julia output is written in the WriteOutput Pass.
+1. Macroprocessor: the Dynare Macroprocessing language is used to perform textual manipulations of the `.mod` file. The output from this stage is a `.mod` file that is ready to be parsed. You can read more about the Dynare Macroprocessing language [here](http://www.dynare.org/summerschool/2017/sebastien/macroprocessor.pdf).
+1. Parsing: takes a potentially macro-expanded `.mod` file and parses it, creating an internal representation of the `.mod` file. In doing so, among other cursory checks, it verifies that the `.mod` has valid Dynare commands and options, that all variables have been declared.
+1. Check Pass: verifies the coherence of the `.mod` file. For example, this is where we ensure that there are the same number of endogenous variables as equations in the model block.
+1. Transform Pass: among other transformations, adds auxiliary variables and equations for leaded and lagged variables, thereby transforming the model into `t-1`, `t`, `t+1` form.
+1. Computing Pass: calculates the derivatives of the transformed static and dynamic models using the symbolic derivative engine.
+1. Write Output: writes Matlab, Octave, C, or Julia files
+
+
+
 
 ## More on JSON  ##
 
@@ -36,21 +44,21 @@ would produce the following lines in JSON
 "parameters": [{"name":"beta", "texName":"\\beta", "longName":"discount factor"}
              , {"name":"rho", "texName":"rho", "longName":"rho"}]
 ```
-This tells us that key `"parameters"` is associated with an array (enclosed by brackets) of objects (enclosed by braces). The array has two entries. The first entry in this array is an object where the key `"name"` is associated with the string `"beta"`, the key `"texName"` is associated with the string `"\\beta"`, and the string `"longName"` is associated with the string `"discount factor"`. The second entry has similar entries with `rho` replacing `beta`. As you can see, understanding the contents of a JSON file and seeing how those values are related to the originating `.mod` file is straitforward. A list of JSON keys created by Dynare are outlined in the [Dynare manual](http://www.dynare.org/documentation-and-support/manual). For more details on JSON visit [https://www.json.org](https://www.json.org).
+This tells us that key `"parameters"` is associated with an array (enclosed by brackets) of objects (enclosed by braces). The array has two entries. The first entry in this array is an object where the key `"name"` is associated with the string `"beta"`, the key `"texName"` is associated with the string `"\\beta"`, and the string `"longName"` is associated with the string `"discount factor"`. The second entry has similar keys but, for the case of `rho`, no specific $\LaTeX$ name or long name was declared, so those keys take the default values. As you can see, understanding the contents of a JSON file and seeing how those values are related to the originating `.mod` file is straitforward. A list of JSON keys created by Dynare are outlined in the [Dynare manual](http://www.dynare.org/documentation-and-support/manual). For more details on JSON visit [https://www.json.org](https://www.json.org).
 
-A JSON representation of the `.mod` file can be obtained after the Parsing, Check, Transform, and Computation stages outlined above. To obtain JSON output from the Dynare Preprocessor, you must choose where you want that output to be produced by passing the command line option `json=parse|check|transform|compute`. Note that the output provided varies a bit, depending on where you want that output produced. For example, the dynamic and static files will only be produced after the derivatives of the model have been calculated in the Computing Pass. Again, the details of what is produced after every pass is outlined in the [Dynare manual](http://www.dynare.org/documentation-and-support/manual)
+A JSON representation of the `.mod` file can be obtained after Parsing, the Check Pass, the Transform Pass, and the Computing Pass stages outlined above. To obtain JSON output from the Dynare Preprocessor, you must choose where you want that output to be produced by passing the command line option `json=parse|check|transform|compute`. Note that the output provided varies a bit, depending on where you want that output produced. For example, the JSON representation of the derivatives of the dynamic and static models will only be produced after the derivatives of the model have been calculated in the Computing Pass. Again, the details of what is produced after every pass is outlined in the [Dynare manual](http://www.dynare.org/documentation-and-support/manual).
 
-## An Example of Putting the JSON output to use: OLS ##
+## An Example of Putting the JSON output to use: Ordinary Least Squares ##
 
 As an example application of how one can use JSON, I will replicate the OLS estimation from Table 1 of Angrist and Fernandez-Val (2013). The data was obtained from [http://sites.bu.edu/ivanf/files/2014/03/m_d_806.dta_.zip](http://sites.bu.edu/ivanf/files/2014/03/m_d_806.dta_.zip) and was modified according to lines 1-88 of `Tables1&2.do` from [http://sites.bu.edu/ivanf/files/2014/03/code.zip](http://sites.bu.edu/ivanf/files/2014/03/code.zip).
 
-I will first show the `.mod` file then show how to call Dynare on this `.mod` file and how to use the JSON output.
+Below, I show the `.mod` file and how to write a routine that uses the JSON representation of said `.mod` file to run OLS.
 
 ### The .mod file ###
 The following are the contents of `afv2013table1.mod`:
-```
-// --+ options: json=compute +--
 
+```dynare
+// --+ options: json=compute +--
 path(['..' filesep 'ols'], path);
 
 /* Reproduces Table 1 OLS estimate from Angrist and Fernandez-Val (2013)
@@ -75,6 +83,7 @@ end;
 
 ds = dyn_ols(dseries('Angrist_FernandezVal_2013.csv'));
 ```
+
 The first line of the file tells the Dynare Preprocessor to produce JSON output after the Computing Pass. This creates the files `afv2013table1.json`, `afv2013table1_original.json`, `afv2013table1_dynamic.json`, and `afv2013table1_static.json`.
 
 The first file, `afv2013table1.json`, is the equivalent of the standard `.m` file output by the Dynare Preprocessor only in JSON format. It contains lists of model variables, the model block (transformed into `t-1`, `t`, `t+1` format), a list of Dynare statements, the list of equation cross references, and some general information about the model.
