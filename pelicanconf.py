@@ -123,6 +123,7 @@ STATIC_PATHS = [
 RMD_READER_RENAME_PLOT = 'directory'
 RMD_READER_KNITR_OPTS_CHUNK = {'fig.path': 'figure/'}
 
+LOAD_CONTENT_CACHE = False
 PUBLICATIONS_SRC = 'content/biblio.bib'
 
 SHARIFF = True
