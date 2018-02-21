@@ -36,7 +36,7 @@ can be obtained, it is helpful to see the Dynare Preprocessor Flow Chart
 and know in a general sense what is done at each stage:
 
 .. image:: {filename}/images/preprocessor-4.6.png
-   :width: 65%
+   :width: 85%
    :alt: Dynare Flow Chart
    :align: center
 
@@ -235,14 +235,14 @@ model block specified in just two lines:
     :linenos: inline
     :linenostart: 52
 
-    jsonmodel = loadjson([M_.fname '_original.json']);
+    jsonmodel = loadjson(jsonfile);
     jsonmodel = jsonmodel.model;
 
-Line 52 reads in ``afv2013table1_original.json`` and loads it
-into a Matlab structure we call ``jsonmodel``. Line 53 then selects the
-``model`` field as that is the only one we’re interested in and
-overwrite ``jsonmodel`` with it. When finished, ``jsonmodel`` contains
-the following two cell entries:
+Line 52 reads in ``afv2013table1_original.json`` (stored in the ``jsonfile``
+variable) and loads it into a Matlab structure we call ``jsonmodel``. Line 53
+then selects the ``model`` field as that is the only one we’re interested in
+and overwrite ``jsonmodel`` with it. When finished, ``jsonmodel`` contains the
+following two cell entries:
 
 .. code:: matlab
 
@@ -575,8 +575,8 @@ that appear on the left-hand side:
         assert(length(residuals) == 1, ['More than one residual in equation ' num2str(i)]);
 
         Y = eval(regexprep(jsonmodel{i}.lhs, regex, 'ds.$&'));
-        for j = 1:lhssub.vobs
-            Y = Y - lhssub{j};
+        if ~isempty(lhssub)
+            Y = Y - lhssub;
         end
 
 By the time we have finished with this block, ``Y`` is a column vector
@@ -589,13 +589,23 @@ observed period in the estimation:
 
         fp = max(Y.firstobservedperiod, X.firstobservedperiod);
         lp = min(Y.lastobservedperiod, X.lastobservedperiod);
-        if isfield(jsonmodel{i}, 'sample') && ~isempty(jsonmodel{i}.sample)
-            if fp > jsonmodel{i}.sample(1) || lp < jsonmodel{i}.sample(end)
+        if isfield(jsonmodel{i}, 'tags') ...
+                && isfield(jsonmodel{i}.tags, 'sample') ...
+                && ~isempty(jsonmodel{i}.tags.sample)
+            colon_idx = strfind(jsonmodel{i}.tags.sample, ':');
+            fsd = dates(jsonmodel{i}.tags.sample(1:colon_idx-1));
+            lsd = dates(jsonmodel{i}.tags.sample(colon_idx+1:end));
+            if fp > fsd
                 warning(['The sample over which you want to estimate contains NaNs. '...
-                    'Adjusting estimation range to be: ' fp.char ' to ' lp.char])
+                    'Adjusting estimation range to begin on: ' fp.char])
             else
-                fp = jsonmodel{i}.sample(1);
-                lp = jsonmodel{i}.sample(end);
+                fp = fsd;
+            end
+            if lp < lsd
+                 warning(['The sample over which you want to estimate contains NaNs. '...
+                    'Adjusting estimation range to end on: ' lp.char])
+            else
+                lp = lsd;
             end
         end
 
@@ -605,10 +615,13 @@ tag (lines 157-158). We adjust ``X`` and ``Y`` accordingly:
 
 .. code-block:: matlab
     :linenos: inline
-    :linenostart: 162
+    :linenostart: 172
 
         Y = Y(fp:lp);
         X = X(fp:lp).data;
+        if ~isempty(lhssub)
+            lhssub = lhssub(fp:lp);
+        end
 
 Thus, when parsing is finished, we will have constructed the ``Y``
 vector and the ``X`` matrix of the standard OLS regression.
@@ -625,7 +638,7 @@ by simply running the standard OLS estimation, we run
 
 .. code-block:: matlab
     :linenos: inline
-    :linenostart: 174
+    :linenostart: 187
 
         [nobs, nvars] = size(X);
         oo_.ols.(tag).dof = nobs - nvars;
@@ -669,7 +682,7 @@ parameters in a table:
         othracem          2.60498        20.10162         0.12959
 
         R^2: 0.061597
-        R^2 Adjusted: 0.061588
+        R^2 Adjusted: 0.061589
         s^2: 479.946813
         Durbin-Watson: 1.913751
     _____________________________________________________________
@@ -697,7 +710,7 @@ parameters in a table:
         othracem          0.03345        11.82874         0.00283
 
         R^2: 0.039395
-        R^2 Adjusted: 0.039386
+        R^2 Adjusted: 0.039387
         s^2: 0.228573
         Durbin-Watson: 1.919213
     _____________________________________________________________
