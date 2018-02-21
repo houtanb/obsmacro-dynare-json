@@ -1,13 +1,14 @@
 Using the Dynare Preprocessor’s JSON Output
 ###########################################
 
-:date: 2018-01-22
+:date: 2018-02-21
 :tags: Dynare, Preprocessor, JSON, Matlab
 :category: Dynare
 :slug: dynare-preprocessor-w-json
 :authors: Houtan Bastani
 :summary: An example of how to use the JSON output from the Dynare Preprocessor
 :download: https://github.com/houtanb/obsmacro-dynare-json.git
+:status: draft
 
 We have recently added an option to produce JSON output from the Dynare
 Preprocessor. It is available in the `unstable snaphost of
