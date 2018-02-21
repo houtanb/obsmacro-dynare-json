@@ -6,4 +6,4 @@
 	url = https://git.nomics.world/macro/theme-bootstrap3.git
 [submodule "plugins"]
 	path = plugins
-	url = git@github.com:getpelican/pelican-plugins.git
+	url = https://git.nomics.world/macro/pelican-plugins.git
