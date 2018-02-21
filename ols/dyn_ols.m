@@ -143,24 +143,37 @@ for i = 1:length(jsonmodel)
     assert(length(residuals) == 1, ['More than one residual in equation ' num2str(i)]);
 
     Y = eval(regexprep(jsonmodel{i}.lhs, regex, 'ds.$&'));
-    for j = 1:lhssub.vobs
-        Y = Y - lhssub{j};
+    if ~isempty(lhssub)
+        Y = Y - lhssub;
     end
-keyboard
+
     fp = max(Y.firstobservedperiod, X.firstobservedperiod);
     lp = min(Y.lastobservedperiod, X.lastobservedperiod);
-    if isfield(jsonmodel{i}, 'sample') && ~isempty(jsonmodel{i}.sample)
-        if fp > jsonmodel{i}.sample(1) || lp < jsonmodel{i}.sample(end)
+    if isfield(jsonmodel{i}, 'tags') ...
+            && isfield(jsonmodel{i}.tags, 'sample') ...
+            && ~isempty(jsonmodel{i}.tags.sample)
+        colon_idx = strfind(jsonmodel{i}.tags.sample, ':');
+        fsd = dates(jsonmodel{i}.tags.sample(1:colon_idx-1));
+        lsd = dates(jsonmodel{i}.tags.sample(colon_idx+1:end));
+        if fp > fsd
             warning(['The sample over which you want to estimate contains NaNs. '...
-                'Adjusting estimation range to be: ' fp.char ' to ' lp.char])
+                'Adjusting estimation range to begin on: ' fp.char])
         else
-            fp = jsonmodel{i}.sample(1);
-            lp = jsonmodel{i}.sample(end);
+            fp = fsd;
+        end
+        if lp < lsd
+             warning(['The sample over which you want to estimate contains NaNs. '...
+                'Adjusting estimation range to end on: ' lp.char])
+        else
+            lp = lsd;
         end
     end
 
     Y = Y(fp:lp);
     X = X(fp:lp).data;
+    if ~isempty(lhssub)
+        lhssub = lhssub(fp:lp);
+    end
 
     if isfield(jsonmodel{i}, 'tags') && ...
             isfield(jsonmodel{i}.tags, 'name')
@@ -192,19 +205,22 @@ keyboard
         end
     end
     oo_.ols.(tag).Yhat = dseries(X*oo_.ols.(tag).beta, fp, yhatname);
+
+    % Residuals
+    oo_.ols.(tag).resid = Y - oo_.ols.(tag).Yhat;
+
+    % Correct Yhat reported back to user
+    if ~isempty(lhssub)
+        Y = Y + lhssub;
+        oo_.ols.(tag).Yhat = oo_.ols.(tag).Yhat + lhssub;
+    end
+ 
+    % Apply correcting function for Yhat if it was passed
     if any(idx) ...
             && length(fitted_names_dict(idx, :)) == 3 ...
             && ~isempty(fitted_names_dict{idx, 3})
         oo_.ols.(tag).Yhat = ...
             feval(fitted_names_dict{idx, 3}, oo_.ols.(tag).Yhat);
-    end
-
-    % Residuals
-    oo_.ols.(tag).resid = Y - oo_.ols.(tag).Yhat;
-
-    % Correct Yhat reported back to user for given
-    for j = 1:lhssub.vobs
-        oo_.ols.(tag).Yhat = oo_.ols.(tag).Yhat + lhssub{j}(fp:lp);
     end
     ds = [ds oo_.ols.(tag).Yhat];
 
@@ -219,7 +235,7 @@ keyboard
     oo_.ols.(tag).R2 = 1 - SS_res/SS_tot;
 
     % Adjusted R^2
-    oo_.ols.(tag).adjR2 = oo_.ols.(tag).R2 - (1 - oo_.ols.(tag).R2)*nvars/(oo_.ols.(tag).dof-1);
+    oo_.ols.(tag).adjR2 = oo_.ols.(tag).R2 - (1 - oo_.ols.(tag).R2)*(nvars-1)/(oo_.ols.(tag).dof);
 
     % Durbin-Watson
     ediff = oo_.ols.(tag).resid.data(2:nobs) - oo_.ols.(tag).resid.data(1:nobs-1);
