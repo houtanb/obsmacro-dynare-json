@@ -7,3 +7,9 @@ afv2013table1/*.log
 afv2013table1/*.mat
 afv2013table1/*.json
 afv2013table1/afv2013table1/*
+
+sw2007/Smets_Wouters_2007/*
+sw2007/Smets_Wouters_2007*.m
+sw2007/Smets_Wouters_2007*.mat
+sw2007/Smets_Wouters_2007*.log
+sw2007/Smets_Wouters_2007*.json
