@@ -1,3 +1,6 @@
+// --+ options: json=compute +--
+path(['..' filesep 'ols'], path);
+
 /*
  * This file provides replication files for 
  * Smets, Frank and Wouters, Rafael (2007): "Shocks and Frictions in US Business Cycles: A Bayesian
@@ -34,15 +37,15 @@
  */
 
 var labobs robs pinfobs dy dc dinve dw ewma epinfma zcapf rkf kf pkf cf
-    invef yf labf wf rrf mc zcap rk k pk c inve y lab pinf w r a b g qs ms
-    spinf sw kpf kp;
+    invef yf labf wf rrf mc zcap rk k pk c inve y lab pinf w r a b g qs
+    spinf sw kpf kp ygap;
 
-varexo ea eb eg eqs em epinf ew;
+varexo ea eb eg eqs ms epinf ew;
 
 parameters curvw cgy curvp constelab constepinf constebeta cmaw cmap calfa
            czcap csadjcost ctou csigma chabb ccs cinvs cfc
            cindw cprobw cindp cprobp csigl clandaw
-           crdpi crpi crdy cry crr
+           crdpi crdy crr crpiMcrpiXcrr cryMcryXcrr
            crhoa crhoas crhob crhog crhols crhoqs crhoms crhopinf crhow
            ctrend cg;
 
@@ -68,10 +71,10 @@ cprobp=   0.6;
 cindw=    0.3243;
 cindp=    0.47;
 czcap=    0.2696;
-crpi=     1.488;
 crr=      0.8762;
-cry=      0.0593;
 crdy=     0.2347;
+crpiMcrpiXcrr = 0.1842;
+cryMcryXcrr   = 0.0073;
 
 crhoa=    0.9977;
 crhob=    0.5799;
@@ -135,12 +138,13 @@ model(linear);
     y = cfc*( calfa*k+(1-calfa)*lab +a );
     pinf = (1/(1+cbetabar*cgamma*cindp)) * ( cbetabar*cgamma*pinf(1) +cindp*pinf(-1)+((1-cprobp)*(1-cbetabar*cgamma*cprobp)/cprobp)/((cfc-1)*curvp+1)*(mc)  )  + spinf;
     w = (1/(1+cbetabar*cgamma))*w(-1)+(cbetabar*cgamma/(1+cbetabar*cgamma))*w(1)+(cindw/(1+cbetabar*cgamma))*pinf(-1)-(1+cbetabar*cgamma*cindw)/(1+cbetabar*cgamma)*pinf+(cbetabar*cgamma)/(1+cbetabar*cgamma)*pinf(1)+(1-cprobw)*(1-cbetabar*cgamma*cprobw)/((1+cbetabar*cgamma)*cprobw)*(1/((clandaw-1)*curvw+1))*(csigl*lab + (1/(1-chabb/cgamma))*c - ((chabb/cgamma)/(1-chabb/cgamma))*c(-1) -w)+ 1*sw;
-    r = crpi*(1-crr)*pinf+cry*(1-crr)*(y-yf)+crdy*(y-yf-y(-1)+yf(-1))+crr*r(-1)+ms;
+    [name='taylor_rule']
+    r = crpiMcrpiXcrr*pinf + cryMcryXcrr*ygap + crdy*diff(ygap) + crr*r(-1) + ms;
+    ygap = y - yf;
     a = crhoa*a(-1)  + ea;
     b = crhob*b(-1) + eb;
     g = crhog*(g(-1)) + eg + cgy*ea;
     qs = crhoqs*qs(-1) + eqs;
-    ms = crhoms*ms(-1) + em;
     spinf = crhopinf*spinf(-1) + epinfma - cmap*epinfma(-1);
     epinfma=epinf;
     sw = crhow*sw(-1) + ewma - cmaw*ewma(-1);
@@ -176,7 +180,7 @@ var eg;
 stderr 0.6090;
 var eqs;
 stderr 0.6017;
-var em;
+var ms;
 stderr 0.2397;
 var epinf;
 stderr 0.1455;
@@ -191,7 +195,7 @@ stderr ea,0.4618,0.01,3,INV_GAMMA_PDF,0.1,2;
 stderr eb,0.1818513,0.025,5,INV_GAMMA_PDF,0.1,2;
 stderr eg,0.6090,0.01,3,INV_GAMMA_PDF,0.1,2;
 stderr eqs,0.46017,0.01,3,INV_GAMMA_PDF,0.1,2;
-stderr em,0.2397,0.01,3,INV_GAMMA_PDF,0.1,2;
+stderr ms,0.2397,0.01,3,INV_GAMMA_PDF,0.1,2;
 stderr epinf,0.1455,0.01,3,INV_GAMMA_PDF,0.1,2;
 stderr ew,0.2089,0.01,3,INV_GAMMA_PDF,0.1,2;
 crhoa,.9676 ,.01,.9999,BETA_PDF,0.5,0.20;
@@ -213,10 +217,10 @@ cindw,0.4425,0.01,0.99,BETA_PDF,0.5,0.15;
 cindp,0.3291,0.01,0.99,BETA_PDF,0.5,0.15;
 czcap,0.2648,0.01,1,BETA_PDF,0.5,0.15;
 cfc,1.4672,1.0,3,NORMAL_PDF,1.25,0.125;
-crpi,1.7985,1.0,3,NORMAL_PDF,1.5,0.25;
 crr,0.8258,0.5,0.975,BETA_PDF,0.75,0.10;
-cry,0.0893,0.001,0.5,NORMAL_PDF,0.125,0.05;
 crdy,0.2239,0.001,0.5,NORMAL_PDF,0.125,0.05;
+crpiMcrpiXcrr,0.1842,0.01,2,NORMAL_PDF,1.5,0.25;
+cryMcryXcrr,0.0073,0.001,0.975,NORMAL_PDF,0.125,0.05;
 constepinf,0.7,0.1,2.0,GAMMA_PDF,0.625,0.1;//20;
 constebeta,0.7420,0.01,2.0,GAMMA_PDF,0.25,0.1;//0.20;
 constelab,1.2918,-10.0,10.0,NORMAL_PDF,0.0,2.0;
@@ -227,6 +231,14 @@ end;
 
 varobs dy dc dinve labobs pinfobs dw robs;
 
-estimation(optim=('MaxIter',200),datafile=usmodel_data,mode_file=usmodel_shock_decomp_mode,mode_compute=0,first_obs=1, presample=4,lik_init=2,prefilter=0,mh_replic=0,mh_nblocks=2,mh_jscale=0.20,mh_drop=0.2, nograph, nodiagnostic, tex);
+ds = dseries('usmodel_dseries.csv');
+ds.ygap = ds.y.detrend(1);
+dyn_ols(ds, {}, {'taylor_rule'});
+crr           = 0.8762;
+crdy          = 0.2347;
+crpiMcrpiXcrr = 0.1842;
+cryMcryXcrr   = 0.0073;
+
+estimation(optim=('MaxIter',200),datafile=usmodel_data,mode_compute=4,first_obs=1, presample=4,lik_init=2,prefilter=0,mh_replic=0,mh_nblocks=2,mh_jscale=0.20,mh_drop=0.2, nograph, nodiagnostic, tex);
 
 shock_decomposition y;
