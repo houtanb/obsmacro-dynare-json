@@ -239,6 +239,18 @@ crdy          = 0.2347;
 crpiMcrpiXcrr = 0.1842;
 cryMcryXcrr   = 0.0073;
 
-estimation(optim=('MaxIter',200),datafile=usmodel_data,mode_compute=4,first_obs=1, presample=4,lik_init=2,prefilter=0,mh_replic=0,mh_nblocks=2,mh_jscale=0.20,mh_drop=0.2, nograph, nodiagnostic, tex);
+estimation(optim=('MaxIter',200),datafile=usmodel_data,mode_compute=4,first_obs=1, presample=4,lik_init=2,prefilter=0,mh_replic=0,mh_nblocks=2,mh_jscale=0.20,mh_drop=0.2, nograph, nodiagnostic, tex, filtered_vars);
 
 shock_decomposition y;
+
+ds1 = dseries();
+ds1.y = dseries(oo_.FilteredVariables.y);
+ds1.yf = dseries(oo_.FilteredVariables.yf);
+ds1.r = dseries(oo_.FilteredVariables.r);
+ds1.pinf = dseries(oo_.FilteredVariables.pinf);
+
+ds1.ygap = ds1.y - ds1.yf;
+dyn_ols(ds1, {}, {'taylor_rule'});
+
+ds1.ygap = ds1.y.detrend(1);
+dyn_ols(ds1, {}, {'taylor_rule'});
