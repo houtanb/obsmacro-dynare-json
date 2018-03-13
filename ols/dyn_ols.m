@@ -70,7 +70,7 @@ regex = strjoin(M_endo_exo_names_trim(idxs), '|');
 mathops = '[\+\*\^\-\/\(\)]';
 for i = 1:length(jsonmodel)
     %% Construct regression matrices
-    rhs_ = strsplit(jsonmodel{i}.rhs, {'+','-','*','/','^','log(','exp(','(',')'});
+    rhs_ = strsplit(jsonmodel{i}.rhs, {'+','-','*','/','^','log(','diff(','exp(','(',')'});
     rhs_(cellfun(@(x) all(isstrprop(x, 'digit')), rhs_)) = [];
     vnames = setdiff(rhs_, M_.param_names);
     if ~isempty(regexp(jsonmodel{i}.rhs, ...
