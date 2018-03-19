@@ -234,6 +234,7 @@ varobs dy dc dinve labobs pinfobs dw robs;
 ds = dseries('usmodel_dseries.csv');
 ds.ygap = ds.y.detrend(1);
 dyn_ols(ds, {}, {'taylor_rule'});
+
 crr           = 0.8762;
 crdy          = 0.2347;
 crpiMcrpiXcrr = 0.1842;
@@ -244,13 +245,35 @@ estimation(optim=('MaxIter',200),datafile=usmodel_data,mode_compute=4,first_obs=
 shock_decomposition y;
 
 ds1 = dseries();
-ds1.y = dseries(oo_.FilteredVariables.y);
-ds1.yf = dseries(oo_.FilteredVariables.yf);
 ds1.r = dseries(oo_.FilteredVariables.r);
 ds1.pinf = dseries(oo_.FilteredVariables.pinf);
-
-ds1.ygap = ds1.y - ds1.yf;
+ds1.ygap = dseries(oo_.FilteredVariables.ygap);
 dyn_ols(ds1, {}, {'taylor_rule'});
 
-ds1.ygap = ds1.y.detrend(1);
-dyn_ols(ds1, {}, {'taylor_rule'});
+figure
+plot(ds1.ygap.data)
+hold on
+plot(ds.ygap(2).data)
+title('ygap')
+legend('Filtered', 'Detrended')
+hold off
+saveas(gcf, 'ygap.png')
+
+figure
+plot(ds1.r.data)
+hold on
+plot(ds.r(2).data)
+title('r')
+legend('Filtered', 'Observed')
+hold off
+saveas(gcf, 'r.png')
+
+figure
+plot(ds1.pinf.data)
+hold on
+plot(ds.pinf(2).data)
+title('pinf')
+legend('Filtered', 'Observed')
+hold off
+saveas(gcf, 'pinf.png')
+

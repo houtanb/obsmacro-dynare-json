@@ -1,7 +1,7 @@
 Using the Dynare Preprocessor’s JSON Output
 ###########################################
 
-:date: 2018-03-13
+:date: 2018-03-19
 :tags: Dynare, Preprocessor, JSON, Matlab
 :category: Dynare
 :slug: dynare-preprocessor-w-json
@@ -1009,10 +1009,104 @@ via OLS. The relevant lines from the estimation routine run by Dynare
 
 .. code:: matlab
 
+               prior mean     mode    s.d. prior pstdev
+    ...
     crdy            0.125   0.1455  0.0190 norm 0.0500
     crpiMcrpiXcrr   1.500   0.2311  0.0246 norm 0.2500
     crr             0.750   0.9240  0.0199 beta 0.1000
     cryMcryXcrr     0.125   0.0199  0.0035 norm 0.0500
+
+We see that the ``crr`` estimates are quite close. However, we see that there
+are noticeable differences among the other estimated parameters. To dig a bit
+deeper into the problem, I rerun the OLS estimation using the filtered variable
+data provided by the estimation routine. Though I could have included this code
+in the original ``.mod`` file, as this is just a one-off, I create a ``.m``
+file to run after the estimation routine, which uses the variables in the
+Matlab workspace, namely ``oo_`` and ``ds``:
+
+.. code-block:: matlab
+    :linenos: inline
+
+    ds1 = dseries();
+    ds1.y = dseries(oo_.FilteredVariables.y);
+    ds1.r = dseries(oo_.FilteredVariables.r);
+    ds1.pinf = dseries(oo_.FilteredVariables.pinf);
+    ds1.ygap = dseries(oo_.FilteredVariables.ygap);
+    dyn_ols(ds1, {}, {'taylor_rule'});
+
+    figure
+    plot(ds1.ygap.data)
+    hold on
+    plot(ds.ygap(2).data)
+    title('ygap')
+    legend('Filtered', 'Detrended')
+    hold off
+    saveas(gcf, 'ygap.png')
+
+    figure
+    plot(ds1.r.data)
+    hold on
+    plot(ds.r(2).data)
+    title('r')
+    legend('Filtered', 'Observed')
+    hold off
+    saveas(gcf, 'r.png')
+
+    figure
+    plot(ds1.pinf.data)
+    hold on
+    plot(ds.pinf(2).data)
+    title('pinf')
+    legend('Filtered', 'Observed')
+    hold off
+    saveas(gcf, 'pinf.png')
+
+Before looking at the OLS output, it's nice to look at a few graphs plotting
+the filtered variable data and the original data used in the OLS above:
+
+.. image:: {filename}/images/ygap.png
+   :alt: Output Gap
+   :align: center
+
+.. image:: {filename}/images/pinf.png
+   :alt: Inflation
+   :align: center
+
+.. image:: {filename}/images/r.png
+   :alt: Interest Rate
+   :align: center
+
+Here we see that the Interest Rate and Inflation data track each other pretty
+well (as they are observed variables) while the Output Gap is quite different,
+as expected.
+
+Rerunning the OLS Estimation, we have:
+
+.. code:: matlab
+
+    OLS Estimation of equation 'taylor_rule' [name = 'taylor_rule']
+
+        Dependent Variable: r
+        No. Independent Variables: 4
+        Observations: 229 from 2Y to 230Y
+
+                      Coefficients    t-statistic      Std. Error
+                      ____________    ____________    ____________
+
+        diff(ygap)         0.05538         3.11122         0.01780
+        pinf               0.08258         2.97786         0.02773
+        r(-1)              0.96704        42.39070         0.02281
+        ygap               0.00726         1.88947         0.00384
+
+        R^2: 0.937412
+        R^2 Adjusted: 0.936578
+        s^2: 0.039161
+        Durbin-Watson: 1.494715
+    ______________________________________________________________
+
+Here we see that though the OLS-estimated parameters do not change much when
+using the filtered variable data. Hence we conclude that the differences in the
+estimated parameters are due to structural differences in the models.
 
 Though in this case the comparison between the OLS-estimated parameters and
 those estimated via the Dynare ``estimation`` routine is not very useful, we
